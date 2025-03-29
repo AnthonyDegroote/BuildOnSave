@@ -1,20 +1,17 @@
 ﻿using System;
 using System.ComponentModel.Design;
-using System.Globalization;
-using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 
-using Task = System.Threading.Tasks.Task;
-
-namespace BuildOnSave.Extension
+namespace BuildOnSave.Extension.Commands
 {
     /// <summary>
     /// Command handler
     /// </summary>
-    internal sealed class Command1
+    internal sealed class BuildCommand
     {
         /// <summary>
         /// Command ID.
@@ -29,26 +26,29 @@ namespace BuildOnSave.Extension
         /// <summary>
         /// Gets the instance of the command.
         /// </summary>
-        public static Command1 Instance { get; private set; }
+        public static BuildCommand Instance { get; private set; }
 
         /// <summary>
         /// VS Package that provides this command, not null.
         /// </summary>
         private readonly AsyncPackage package;
 
+        private bool isChecked = false;
+
         /// <summary>
-        /// Initializes a new instance of the <see cref="Command1"/> class.
+        /// Initializes a new instance of the <see cref="BuildCommand"/> class.
         /// Adds our command handlers for menu (commands must exist in the command table file)
         /// </summary>
         /// <param name="package">Owner package, not null.</param>
         /// <param name="commandService">Command service to add command to, not null.</param>
-        private Command1(AsyncPackage package, OleMenuCommandService commandService)
+        private BuildCommand(AsyncPackage package, OleMenuCommandService commandService)
         {
             this.package = package ?? throw new ArgumentNullException(nameof(package));
             commandService = commandService ?? throw new ArgumentNullException(nameof(commandService));
 
             var menuCommandID = new CommandID(CommandSet, CommandId);
             var menuItem = new MenuCommand(Execute, menuCommandID);
+
             commandService.AddCommand(menuItem);
         }
 
@@ -60,10 +60,10 @@ namespace BuildOnSave.Extension
         {
             // Switch to the main thread - the call to AddCommand in Command1's constructor requires
             // the UI thread.
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(package.DisposalToken);
+            //await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(package.DisposalToken);
 
             OleMenuCommandService commandService = await package.GetServiceAsync(typeof(IMenuCommandService)) as OleMenuCommandService;
-            Instance = new Command1(package, commandService);
+            Instance = new BuildCommand(package, commandService);
         }
 
         /// <summary>
@@ -75,12 +75,27 @@ namespace BuildOnSave.Extension
         /// <param name="e">Event args.</param>
         private void Execute(object sender, EventArgs e)
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
-            string message = string.Format(CultureInfo.CurrentCulture, "Inside {0}.MenuItemCallback()", GetType().FullName);
-            string title = "Command1";
+            string message = !isChecked ? "Feature enabled" : "Feature disabled";
+            string title = "Hello World Command";
 
-            // Show a message box to prove we were here
-            VsShellUtilities.ShowMessageBox(package, message, title, OLEMSGICON.OLEMSGICON_INFO, OLEMSGBUTTON.OLEMSGBUTTON_OK, OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+            var result = VsShellUtilities.ShowMessageBox(
+                package,
+                message,
+                title,
+                OLEMSGICON.OLEMSGICON_INFO,
+                OLEMSGBUTTON.OLEMSGBUTTON_YESNO,
+                OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+
+            var dialogResult = (DialogResult)result;
+
+            if (dialogResult == DialogResult.Yes)
+            {
+                isChecked = !isChecked;
+                if (sender is MenuCommand menuCommand)
+                {
+                    menuCommand.Checked = isChecked;
+                }
+            }
         }
     }
 }
