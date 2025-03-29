@@ -7,6 +7,8 @@ namespace BuildOnSave.Extension
 {
     internal class RunningDocTableEvents : IVsRunningDocTableEvents
     {
+        private static readonly object locker = new object();
+
         private readonly DTE _dte;
 
         public RunningDocTableEvents(DTE dte)
@@ -32,21 +34,30 @@ namespace BuildOnSave.Extension
         public int OnAfterSave(uint docCookie)
         {
             Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
-            // Handle the save event here
-            System.Diagnostics.Debug.WriteLine("Document saved.");
-            _dte.Solution.SolutionBuild.Build(false);
 
-            // Execute tests after build
-            _dte.Events.BuildEvents.OnBuildDone += BuildEvents_OnBuildDone;
+            if (_dte.Solution.SolutionBuild.BuildState == vsBuildState.vsBuildStateInProgress)
+            {
+                return VSConstants.S_OK;
+            }
+
+            lock (locker)
+            {
+                if (_dte.Solution.SolutionBuild.BuildState == vsBuildState.vsBuildStateInProgress)
+                {
+                    return VSConstants.S_OK;
+                }
+
+                // Handle the save event here
+                _dte.Solution.SolutionBuild.Build(true);
+
+                if (_dte.Solution.SolutionBuild.BuildState == vsBuildState.vsBuildStateDone)
+                {
+                    // Execute tests after build
+                    _dte.ExecuteCommand("TestExplorer.RunAllTests");
+                }
+            }
 
             return VSConstants.S_OK;
-        }
-
-        private void BuildEvents_OnBuildDone(vsBuildScope Scope, vsBuildAction Action)
-        {
-            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
-            _dte.Events.BuildEvents.OnBuildDone -= BuildEvents_OnBuildDone;
-            _dte.ExecuteCommand("TestExplorer.RunAllTests");
         }
 
         public int OnBeforeDocumentWindowShow(uint docCookie, int fFirstShow, IVsWindowFrame pFrame)
