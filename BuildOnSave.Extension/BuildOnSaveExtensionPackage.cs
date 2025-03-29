@@ -106,6 +106,8 @@ namespace BuildOnSave.Extension
                     }
                 }
 
+
+
                 // Unadvise the solution of our event handler
                 if (_solutionEventsCookie != 0)
                 {
