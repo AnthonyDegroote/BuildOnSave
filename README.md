@@ -1,6 +1,6 @@
 # BuildOnSave for Visual Studio 2022 [Preview]
 
-This repository is an attempt to port the **BuildOnSave** extension to **Visual Studio 2022**.
+This repository is an attempt to port the **BuildOnSave** extension to **Visual Studio 2022 [Preview]**.
 
 The original **BuildOnSave** extension was developed by [pragmatrix](https://github.com/pragmatrix/BuildOnSave) and provides an automatic build feature whenever a file is saved.
 
