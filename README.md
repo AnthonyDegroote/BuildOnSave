@@ -1,4 +1,4 @@
-# BuildOnSave for Visual Studio 2022
+# BuildOnSave for Visual Studio 2022 [Preview]
 
 This repository is an attempt to port the **BuildOnSave** extension to **Visual Studio 2022**.
 
