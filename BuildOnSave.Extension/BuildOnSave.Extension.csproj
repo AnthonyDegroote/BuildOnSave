@@ -45,7 +45,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="SolutionEventsHandler.cs" />
     <Compile Include="RunningDocTableEvents.cs" />
     <Compile Include="Commands\BuildCommand.cs" />
     <Compile Include="Constants.cs" />
@@ -78,7 +77,10 @@
     </VSCTCompile>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Resources\Command1.png" />
+    <Content Include="Resources\Command1.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="VSPackage.resx">

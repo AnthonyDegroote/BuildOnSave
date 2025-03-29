@@ -32,14 +32,12 @@ namespace BuildOnSave.Extension
     /// </remarks>
     [ProvideAutoLoad(UIContextGuids80.SolutionExists, PackageAutoLoadFlags.BackgroundLoad)]
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
-    [Guid(Constants.PackageGuidString)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
+    [Guid(Constants.PackageGuidString)]
     public sealed class BuildOnSaveExtensionPackage : AsyncPackage
     {
         private uint _rdtEventCookie;
         private RunningDocTableEvents _rdtEvents;
-        private uint _solutionEventsCookie;
-        private SolutionEventsHandler _solutionEventsHandler;
 
         #region Package Members
 
@@ -68,25 +66,8 @@ namespace BuildOnSave.Extension
             // Advise the RDT of our event handler
             rdt.AdviseRunningDocTableEvents(_rdtEvents, out _rdtEventCookie);
 
-            // Get the Solution service
-            IVsSolution solution = await GetServiceAsync(typeof(SVsSolution)) as IVsSolution;
-            Assumes.Present(solution);
-
-            // Create an instance of the solution events handler
-            _solutionEventsHandler = new SolutionEventsHandler(this);
-
-            // Advise the solution of our event handler
-            solution.AdviseSolutionEvents(_solutionEventsHandler, out _solutionEventsCookie);
-
             await BuildCommand.InitializeAsync(this);
             await base.InitializeAsync(cancellationToken, progress);
-
-            /**
-            await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
-
-            await BuildCommand.InitializeAsync(this);
-            await base.InitializeAsync(cancellationToken, progress);
-            **/
         }
 
         #endregion
@@ -103,16 +84,6 @@ namespace BuildOnSave.Extension
                     {
                         rdt.UnadviseRunningDocTableEvents(_rdtEventCookie);
                         _rdtEventCookie = 0;
-                    }
-                }
-
-                // Unadvise the solution of our event handler
-                if (_solutionEventsCookie != 0)
-                {
-                    if (GetService(typeof(SVsSolution)) is IVsSolution solution)
-                    {
-                        solution.UnadviseSolutionEvents(_solutionEventsCookie);
-                        _solutionEventsCookie = 0;
                     }
                 }
             }
